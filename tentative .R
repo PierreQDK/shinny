@@ -2,35 +2,13 @@
 
 library(readxl)
 library(shiny)
+library(leaflet)
+library(sf)
 
 data <-read_xlsx("/Users/pierrequintindekercadio/Desktop/shinny/TAUX CHOMAGE FRANCE _ ESPAGNE T4 2024.xlsx")
 
 
 View(data)
-
-
-
-
-ui <- fluidPage(
-  tags$head(
-    tags$style(HTML("
-      .title {
-        text-align: center;
-        font-size: 50px;
-        font-weight: bold;
-        margin-top: 20px;
-      }
-    "))
-  ),
-  div("Comparaison des départements", class = "title")
-)
-
-server <- function(input, output, session) {
-}
-
-shinyApp(ui, server)
-
-
 
 
 
@@ -41,27 +19,49 @@ library(sf)
 # Charger les départements de France (GeoJSON)
 departements <- st_read("https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson")
 
-# Texte d'explication des départements (exemple)
-descriptions <- list(
-  "Paris" = "Paris est la capitale de la France, célèbre pour la Tour Eiffel et son patrimoine culturel.",
-  "Rhône" = "Le département du Rhône est connu pour Lyon, la gastronomie et le vignoble du Beaujolais.",
-  "Gironde" = "La Gironde est célèbre pour Bordeaux et ses vins prestigieux.",
-  "Bouches-du-Rhône" = "Situé en Provence, il comprend Marseille et ses calanques magnifiques."
-)
-
 ui <- fluidPage(
-  titlePanel("Carte des Départements Français"),
+  # Titre centré en grand
+  tags$head(
+    tags$style(HTML("
+      .title {
+        text-align: center;
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .description {
+        width: 40%;
+        font-size: 18px;
+        padding: 20px;
+      }
+      .map-container {
+        width: 55%;
+        height: 600px;
+      }
+    "))
+  ),
   
-  sidebarLayout(
-    sidebarPanel(
-      selectInput("selected_dep", "Sélectionner un département :", 
-                  choices = departements$nom, selected = NULL, multiple = FALSE),
-      textOutput("description")  # Zone pour afficher la description
-    ),
-    
-    mainPanel(
-      leafletOutput("carte", height = "600px")
-    )
+  # Titre principal
+  div("Comparaison des Départements", class = "title"),
+  
+  # Conteneur principal avec description à gauche et carte à droite
+  div(class = "container",
+      div(class = "description",
+          h3("Description du projet"),
+          p("Ce projet vise à comparer les départements français à travers différentes 
+             statistiques et caractéristiques régionales. Sélectionnez un département 
+             sur la carte pour afficher ses informations."),
+          p("Ajoutez ici plus de détails sur les objectifs de votre projet et 
+             les données utilisées.")
+      ),
+      div(class = "map-container",
+          leafletOutput("carte", height = "100%")
+      )
   )
 )
 
@@ -73,39 +73,14 @@ server <- function(input, output, session) {
         fillColor = "lightblue",
         color = "black",
         weight = 1,
-        layerId = ~nom,
         highlight = highlightOptions(weight = 3, color = "red", fillOpacity = 0.7),
-        label = ~nom
+        label = ~paste(code, "-", nom),  # Afficher "Numéro - Nom" au survol
+        popup = ~paste("Département n°", code, "<br>", "Nom :", nom) # Popup au clic
       ) %>%
-      setView(lng = 2.2137, lat = 46.2276, zoom = 6) # Centrer sur la France
-  })
-  
-  observeEvent(input$selected_dep, {
-    selected_pol <- departements[departements$nom == input$selected_dep, ]
-    
-    leafletProxy("carte") %>%
-      clearShapes() %>%
-      addPolygons(data = departements,
-                  fillColor = "lightblue",
-                  color = "black",
-                  weight = 1,
-                  label = ~nom) %>%
-      addPolygons(data = selected_pol,
-                  fillColor = "red",
-                  color = "black",
-                  weight = 2,
-                  fillOpacity = 0.5)
-  })
-  
-  # Affichage du texte dynamique en fonction du département sélectionné
-  output$description <- renderText({
-    dep <- input$selected_dep
-    if (is.null(dep) || dep == "") {
-      return("Sélectionnez un département pour voir sa description.")
-    }
-    return(descriptions[[dep]] %||% "Aucune description disponible pour ce département.")
+      setView(lng = 2.2137, lat = 46.2276, zoom = 6) # Centrage sur la France
   })
 }
 
 shinyApp(ui, server)
+
 
