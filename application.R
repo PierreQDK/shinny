@@ -4,6 +4,9 @@ library(sf)
 library(readxl)
 library(dplyr)
 library(shinythemes)
+library(ggplot2)
+library(plotly)
+
 
 # Charger les données des revenus, chômage et transport
 data <- read_xlsx("/Users/pierrequintindekercadio/Desktop/shinny/TAUX CHOMAGE FRANCE _ ESPAGNE T4 2024.xlsx")
@@ -106,7 +109,6 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte des Revenus",
                           fluidPage(
                             titlePanel("Indicateur Économique - Revenus"),
-                            p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures."),
                             
                             # Sélection du département
                             selectInput("select_departement_revenu", "Sélectionnez un département :", 
@@ -137,7 +139,6 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte du Chômage",
                           fluidPage(
                             titlePanel("Indicateur du taux de Chômage"),
-                            p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive."),
                             
                             # Sélection du département
                             selectInput("select_departement_chomage", "Sélectionnez un département :", 
@@ -163,7 +164,6 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte du Transport",
                           fluidPage(
                             titlePanel("Indicateur de Transport"),
-                            p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports dans une région. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région."),
                             
                             # Sélection du département
                             selectInput("select_departement_transport", "Sélectionnez un département :", 
@@ -188,7 +188,6 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte de la Construction",
                           fluidPage(
                             titlePanel("Indicateur de Construction"),
-                            p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire."),
                             
                             # Sélection du département
                             selectInput("select_departement_construction", "Sélectionnez un département :", 
@@ -212,7 +211,6 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte de la Démographie",
                           fluidPage(
                             titlePanel("Indicateur Démographique"),
-                            p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures."),
                             
                             # Sélection du département
                             fluidRow(
@@ -237,7 +235,35 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                             
                             
                           ), p(demo_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
+                 ), 
+                 tabPanel("Tableau de Bord Graphique",
+                          fluidPage(
+                            titlePanel("Visualisation des Indicateurs Socio-Économiques"),
+                            
+                            # Sélection du département
+                            fluidRow(
+                              column(4, 
+                                     selectInput("select_departement_graph", "Sélectionnez un département :", 
+                                                 choices = unique(departements_sf$nom), selected = "Paris")
+                              )
+                            ),
+                            
+                            # Affichage dynamique des jauges
+                            fluidRow(
+                              column(6, h3("Taux de Chômage"), plotlyOutput("gauge_chomage")),
+                              column(6, h3("Revenu Moyen"), plotlyOutput("gauge_revenu"))
+                            ),
+                            fluidRow(
+                              column(6, h3("Indice de Transport"), plotlyOutput("gauge_transport")),
+                              column(6, h3("Taux de Construction"), plotlyOutput("gauge_construction"))
+                            ),
+                            fluidRow(
+                              column(6, h3("Croissance Démographique"), plotlyOutput("gauge_demo"))
+                            )
+                          )
                  )
+                 
+                 
                  
                  
                  
@@ -503,7 +529,113 @@ server <- function(input, output, session) {
                   group = "selection")
   })
   
+  # Fonction pour créer un graphique de jauge
+  create_gauge_plotly <- function(value, min_val, max_val, title) {
+    angle <- pi * (1 - (value - min_val) / (max_val - min_val))  # Calcul de l'angle
+    
+    x_end <- 0.5 + 0.35 * cos(angle)  # Raccourcir un peu la flèche pour la remonter
+    y_end <- 0.25 + 0.35 * sin(angle)  # Augmenter la position de départ pour qu'elle soit plus haute
+    
+    fig <- plot_ly(
+      type = "indicator",
+      mode = "gauge",
+      value = value,
+      title = list(text = title, font = list(size = 14)),  # Réduire la taille du titre
+      gauge = list(
+        axis = list(range = list(min_val, max_val)),  # Plage de la jauge
+        bar = list(color = "transparent"),  # Retirer la barre noire centrale
+        steps = list(
+          list(range = c(min_val, min_val + (max_val - min_val) * 0.5), color = "green"),  # Zone verte
+          list(range = c(min_val + (max_val - min_val) * 0.5, min_val + (max_val - min_val) * 0.75), color = "yellow"),  # Zone jaune
+          list(range = c(min_val + (max_val - min_val) * 0.75, max_val), color = "red")  # Zone rouge
+        )
+      )
+    ) %>%
+      layout(
+        shapes = list(
+          list(
+            type = "line",
+            x0 = 0.5, y0 = 0.25,  # Centre de la jauge (remonté)
+            x1 = x_end, y1 = y_end,  # Pointe de la flèche
+            line = list(color = "black", width = 6)  # Largeur et couleur de la flèche
+          ),
+          list(  # Ajout du cercle central pour améliorer l’esthétique
+            type = "circle",
+            xref = "paper", yref = "paper",
+            x0 = 0.48, x1 = 0.52, y0 = 0.23, y1 = 0.27,
+            fillcolor = "black",
+            line = list(color = "black")
+          )
+        ),
+        annotations = list(
+          list(
+            x = 0.5, y = 0.1,  # Position du texte sous la flèche
+            text = paste0("<b>", round(value, 2), "</b>"),  # Affichage du chiffre en gras
+            font = list(size = 18),  # Taille réduite du chiffre
+            showarrow = FALSE
+          )
+        )
+      )
+    
+    return(fig)
+  }
+  
+  
+  
+  
+  # 📌 Vérifier que les données sont bien chargées
+  req(departements_sf)
+  
+  # 📌 Définition des valeurs min/max pour chaque indicateur
+  min_chomage <- reactive({ min(departements_sf$Chomage, na.rm = TRUE) })
+  max_chomage <- reactive({ max(departements_sf$Chomage, na.rm = TRUE) })
+  
+  min_revenu <- reactive({ min(departements_sf$Revenu, na.rm = TRUE) })
+  max_revenu <- reactive({ max(departements_sf$Revenu, na.rm = TRUE) })
+  
+  min_transport <- reactive({ min(departements_sf$Transport, na.rm = TRUE) })
+  max_transport <- reactive({ max(departements_sf$Transport, na.rm = TRUE) })
+  
+  min_construction <- reactive({ min(departements_sf$construction, na.rm = TRUE) })
+  max_construction <- reactive({ max(departements_sf$construction, na.rm = TRUE) })
+  
+  min_demo <- reactive({ min(departements_sf$Demo, na.rm = TRUE) })
+  max_demo <- reactive({ max(departements_sf$Demo, na.rm = TRUE) })
+  
+  # 📌 Observer le département sélectionné et générer les jauges
+  output$gauge_chomage <- renderPlotly({
+    req(input$select_departement_graph)
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
+    create_gauge_plotly(selected_dep$Chomage, min_chomage(), max_chomage(), "Taux de Chômage (%)")
+  })
+  
+  output$gauge_revenu <- renderPlotly({
+    req(input$select_departement_graph)
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
+    create_gauge_plotly(selected_dep$Revenu, min_revenu(), max_revenu(), "Revenu Moyen (€)")
+  })
+  
+  output$gauge_transport <- renderPlotly({
+    req(input$select_departement_graph)
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
+    create_gauge_plotly(selected_dep$Transport, min_transport(), max_transport(), "Indice de Transport")
+  })
+  
+  output$gauge_construction <- renderPlotly({
+    req(input$select_departement_graph)
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
+    create_gauge_plotly(selected_dep$construction, min_construction(), max_construction(), "Taux de Construction")
+  })
+  
+  output$gauge_demo <- renderPlotly({
+    req(input$select_departement_graph)
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
+    create_gauge_plotly(selected_dep$Demo, min_demo(), max_demo(), "Croissance Démographique (%)")
+  })
 }
 
 # Lancer l'application
 shinyApp(ui, server)
+
+
+
