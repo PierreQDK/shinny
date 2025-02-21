@@ -83,7 +83,10 @@ construction_text <- paste("Département avec le plus bas taux de construction :
 demo_text <- paste("Département avec le plus bas taux démographique :", max_demo_dep$nom, "(", round(max_demo_dep$Demo, 2), ")")
 # Interface utilisateur
 
-ui <- navbarPage("Comparaison Socio-Économique des départements francais en 2022", theme = shinytheme("flatly"),
+ui <- navbarPage(
+                 div("Comparaison Socio-Économique des départements français en 2022", 
+                     style = "text-align: center; width: 100%; font-size: 22px; font-weight: bold;"),
+                 theme = shinytheme("flatly"),
                  
                  
                  tabPanel("Accueil",
