@@ -74,12 +74,16 @@ transport_text <- paste("Département avec le plus bas indice de transport :", m
 construction_text <- paste("Département avec le plus bas taux de construction :", min_construction_dep$nom, "(", round(min_construction_dep$construction, 2), ")")
 
 # Interface utilisateur
+
 ui <- navbarPage("Comparaison Socio-Économique des départements francais en 2022", theme = shinytheme("flatly"),
+          
+                 
                  tabPanel("Accueil",
                           fluidPage(
                             div("Présentation", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
                             fluidRow(
                               column(4, 
+
                                      h2("Description de l'étude"),
                                      p("Cette étude propose une analyse socio-économique des 96 départements de la métropole française afin d’accompagner les décideurs politiques dans l’identification des territoires nécessitant des investissements prioritaires. L’objectif est de favoriser une répartition plus équitable des ressources et de réduire les inégalités territoriales."),
                                      
@@ -89,7 +93,8 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                                      p("- ", strong("Carte du Transport"), " : Analyse des infrastructures de transport et de leur accessibilité pour comprendre leur impact sur le développement économique."),
                                      p("- ", strong("Carte de la Construction"), " : État des dynamiques de construction et d’urbanisation pour évaluer le développement immobilier et son influence sur la croissance locale.")
                               ),
-                              column(8, leafletOutput("map_general", height = "600px"))
+                              column(8, 
+                                     div(style = "display: flex; justify-content: center;"),leafletOutput("map_general", height = "600px"))
                             )
                           )
                  ),
