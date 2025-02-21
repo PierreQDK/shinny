@@ -58,6 +58,9 @@ bins_construction <- c(0.2, 0.6, 1.0, 1.4, 2.1)
 colors_construction <- c("#f7fbff", "#c6dbef", "#6baed6", "#08519c")
 pal_construction <- colorBin(palette = colors_construction, bins = bins_construction, na.color = "#f0f0f0", domain = departements_sf$construction)
 
+colnames(departements_sf) <- gsub("démo", "Demo", colnames(departements_sf))  # Renomme la colonne
+
+
 # Trouver les départements avec les indices les plus élevés
 max_revenu_dep <- departements_sf %>% filter(!is.na(Revenu)) %>% slice_max(order_by = Revenu, n = 1)
 min_revenu_dep <- departements_sf %>% filter(Revenu == min(Revenu, na.rm = TRUE))
@@ -67,23 +70,25 @@ max_transport_dep <- departements_sf %>% filter(!is.na(Transport)) %>% slice_max
 min_transport_dep <- departements_sf %>% filter(Transport == min(Transport, na.rm = TRUE))
 max_construction_dep <- departements_sf %>% filter(!is.na(construction)) %>% slice_max(order_by = construction, n = 1)
 min_construction_dep <- departements_sf %>% filter(construction == min(construction, na.rm = TRUE))
+max_demo_dep <- departements_sf %>% filter(Demo == min(Demo, na.rm = TRUE))
+
 
 revenu_text <- paste("Département avec le plus bas revenu moyen :", min_revenu_dep$nom, "(", round(min_revenu_dep$Revenu, 0), "€)")
 chomage_text <- paste("Département avec le taux de chômage le plus élevé :", highest_chomage_dep$nom, "(", round(highest_chomage_dep$Chomage, 1), "%)")
 transport_text <- paste("Département avec le plus bas indice de transport :", min_transport_dep$nom, "(", round(min_transport_dep$Transport, 0), ")")
 construction_text <- paste("Département avec le plus bas taux de construction :", min_construction_dep$nom, "(", round(min_construction_dep$construction, 2), ")")
-
+demo_text <- paste("Département avec le plus bas taux démographique :", max_demo_dep$nom, "(", round(max_demo_dep$Demo, 2), ")")
 # Interface utilisateur
 
 ui <- navbarPage("Comparaison Socio-Économique des départements francais en 2022", theme = shinytheme("flatly"),
-          
+                 
                  
                  tabPanel("Accueil",
                           fluidPage(
                             div("Présentation", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
                             fluidRow(
                               column(4, 
-
+                                     
                                      h2("Description de l'étude"),
                                      p("Cette étude propose une analyse socio-économique des 96 départements de la métropole française afin d’accompagner les décideurs politiques dans l’identification des territoires nécessitant des investissements prioritaires. L’objectif est de favoriser une répartition plus équitable des ressources et de réduire les inégalités territoriales."),
                                      
@@ -101,6 +106,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte des Revenus",
                           fluidPage(
                             titlePanel("Indicateur Économique - Revenus"),
+                            p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures."),
                             
                             # Sélection du département
                             selectInput("select_departement_revenu", "Sélectionnez un département :", 
@@ -111,41 +117,42 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                             fluidRow(
                               column(6,
                                      h3("Carte de l'Ile de France des Revenus par habitant", style = "text-align: center;"),
-                      
+                                     
                                      leafletOutput("idf_carte_revenu", height = "600px")
                               ),
                               column(6, 
                                      h3("Carte francaise des Revenus par habitant", style = "text-align: center;"),
-                                
+                                     
                                      leafletOutput("map_revenu", height = "600px"),
                                      
                               )
-                 
+                              
                             )
                           ),
                           p(revenu_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
                  ),
-                
+                 
                  
                  
                  tabPanel("Carte du Chômage",
                           fluidPage(
                             titlePanel("Indicateur du taux de Chômage"),
+                            p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive."),
                             
                             # Sélection du département
                             selectInput("select_departement_chomage", "Sélectionnez un département :", 
                                         choices = unique(departements_sf$nom), selected = "Paris"),
                             textOutput("info_chomage"),
-                
+                            
                             fluidRow(
                               column(6,
                                      h3("Analyse du Taux de Chômage", style = "text-align: center;"),
-                                    
+                                     
                                      leafletOutput("idf_carte_chomage", height = "600px")
                               ),
                               column(6, 
                                      h3("Carte du taux de Chômage", style = "text-align: center;"),
-                                   
+                                     
                                      leafletOutput("map_chomage", height = "600px")
                               )
                             )
@@ -156,6 +163,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte du Transport",
                           fluidPage(
                             titlePanel("Indicateur de Transport"),
+                            p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports dans une région. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région."),
                             
                             # Sélection du département
                             selectInput("select_departement_transport", "Sélectionnez un département :", 
@@ -169,7 +177,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                               ),
                               column(6, 
                                      h3("Carte du taux de Transport", style = "text-align: center;"),
-                                    
+                                     
                                      leafletOutput("map_transport", height = "600px")
                               )
                             )
@@ -180,6 +188,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte de la Construction",
                           fluidPage(
                             titlePanel("Indicateur de Construction"),
+                            p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire."),
                             
                             # Sélection du département
                             selectInput("select_departement_construction", "Sélectionnez un département :", 
@@ -193,13 +202,46 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                               ),
                               column(6, 
                                      h3("Carte du taux de Construction", style = "text-align: center;"),
-                         
+                                     
                                      leafletOutput("map_construction", height = "600px")
                               )
                             )
                           ), 
                           p(construction_text,style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;"),
+                 ), 
+                 tabPanel("Carte de la Démographie",
+                          fluidPage(
+                            titlePanel("Indicateur Démographique"),
+                            p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures."),
+                            
+                            # Sélection du département
+                            fluidRow(
+                              column(4, 
+                                     selectInput("select_departement_demo", "Sélectionnez un département :", 
+                                                 choices = unique(departements_sf$nom), selected = "Paris")
+                              )
+                            ),
+                            textOutput("info_demo"),
+                            
+                            # Cartes alignées côte à côte
+                            fluidRow(
+                              column(6, 
+                                     h3("Carte Démographique de l'Ile de France", style = "text-align: center;"),
+                                     leafletOutput("idf_carte_demo", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte Démographique de la France", style = "text-align: center;"),
+                                     leafletOutput("map_demo", height = "600px")
+                              )
+                            )
+                            
+                            
+                          ), p(demo_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
                  )
+                 
+                 
+                 
+                 
 )
 
 # Serveur
@@ -386,6 +428,79 @@ server <- function(input, output, session) {
     
     paste("Le département sélectionné est", input$select_departement_construction, 
           "avec un taux de construction de", round(selected_dep$construction, 2), ".")
+  })
+  
+  # Affichage du texte avec la valeur sélectionnée
+  output$info_demo <- renderText({
+    req(input$select_departement_demo)
+    
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_demo)
+    
+    paste("Le département sélectionné est", input$select_departement_demo, 
+          "avec un taux de croissance démographique de", round(selected_dep$Demo, 2), "%.")
+  })
+  
+  # Affichage du département avec la plus forte croissance démographique
+  output$max_demo_dep <- renderText({
+    paste("Département avec la plus forte croissance démographique :", max_demo_dep$nom, 
+          "(", round(max_demo_dep$Demo, 2), "% )")
+  })
+  
+  # Carte nationale de la Démographie
+  output$map_demo <- renderLeaflet({
+    leaflet(departements_sf) %>%
+      addPolygons(fillColor = ~colorNumeric("Blues", departements_sf$Demo)(Demo), 
+                  color = "white", weight = 1,
+                  fillOpacity = 0.8, label = ~paste(nom, "<br>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%")) %>%
+      
+      # Contour rouge pour le département avec la plus forte croissance démographique
+      addPolygons(data = max_demo_dep, color = "red", weight = 3, fillOpacity = 0, 
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%")) %>%
+      
+      addLegend(position = "bottomleft", 
+                pal = colorNumeric("Blues", departements_sf$Demo), 
+                values = departements_sf$Demo, title = "Taux de Croissance Démographique (%)",
+                labFormat = labelFormat(suffix = " %"), opacity = 1) %>%
+      setView(lng = 2.2137, lat = 46.2276, zoom = 6)
+  })
+  
+  # Carte de l'Île-de-France
+  output$idf_carte_demo <- renderLeaflet({
+    selected_departements <- c("75", "77", "78", "91", "92", "93", "94", "95")
+    
+    leaflet(departements_sf %>% filter(code %in% selected_departements)) %>%
+      addPolygons(fillColor = ~colorNumeric("Blues", departements_sf$Demo)(Demo), 
+                  color = "white", weight = 1,
+                  fillOpacity = 0.8, label = ~paste(nom, "<br>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%")) %>%
+      
+      # Contour rouge pour le département avec la plus forte croissance démographique
+      addPolygons(data = max_demo_dep, color = "red", weight = 3, fillOpacity = 0, 
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%")) %>%
+      
+      setView(lng = 2.35, lat = 48.85, zoom = 9)
+  })
+  
+  # Observer le département sélectionné et le mettre en surbrillance orange
+  observeEvent(input$select_departement_demo, {
+    req(input$select_departement_demo)
+    
+    selected_dep <- departements_sf %>% filter(nom == input$select_departement_demo)
+    
+    leafletProxy("map_demo") %>%
+      clearGroup("selection") %>%
+      addPolygons(data = selected_dep, fillColor = "orange", color = "black", weight = 3, 
+                  fillOpacity = 0.9, label = ~paste(nom, "<br>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  group = "selection")
+    
+    leafletProxy("idf_carte_demo") %>%
+      clearGroup("selection") %>%
+      addPolygons(data = selected_dep, fillColor = "orange", color = "black", weight = 3, 
+                  fillOpacity = 0.9, label = ~paste(nom, "<br>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  popup = ~paste("<strong>", nom, "</strong><br/>Taux de croissance démographique :", round(Demo, 2), "%"),
+                  group = "selection")
   })
   
 }
