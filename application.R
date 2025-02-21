@@ -109,6 +109,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte des Revenus",
                           fluidPage(
                             titlePanel("Indicateur Économique - Revenus"),
+                            p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures."),
                             
                             # Sélection du département
                             selectInput("select_departement_revenu", "Sélectionnez un département :", 
@@ -139,6 +140,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte du Chômage",
                           fluidPage(
                             titlePanel("Indicateur du taux de Chômage"),
+                            p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive."),
                             
                             # Sélection du département
                             selectInput("select_departement_chomage", "Sélectionnez un département :", 
@@ -164,6 +166,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte du Transport",
                           fluidPage(
                             titlePanel("Indicateur de Transport"),
+                            p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports en commun dans un département. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région."),
                             
                             # Sélection du département
                             selectInput("select_departement_transport", "Sélectionnez un département :", 
@@ -188,6 +191,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte de la Construction",
                           fluidPage(
                             titlePanel("Indicateur de Construction"),
+                            p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire."),
                             
                             # Sélection du département
                             selectInput("select_departement_construction", "Sélectionnez un département :", 
@@ -211,6 +215,7 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                  tabPanel("Carte de la Démographie",
                           fluidPage(
                             titlePanel("Indicateur Démographique"),
+                            p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures."),
                             
                             # Sélection du département
                             fluidRow(
@@ -250,15 +255,15 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                             
                             # Affichage dynamique des jauges
                             fluidRow(
-                              column(6, h3("Taux de Chômage"), plotlyOutput("gauge_chomage")),
-                              column(6, h3("Revenu Moyen"), plotlyOutput("gauge_revenu"))
+                              column(6,  plotlyOutput("gauge_chomage")),
+                              column(6,  plotlyOutput("gauge_revenu"))
                             ),
                             fluidRow(
-                              column(6, h3("Indice de Transport"), plotlyOutput("gauge_transport")),
-                              column(6, h3("Taux de Construction"), plotlyOutput("gauge_construction"))
+                              column(6, plotlyOutput("gauge_transport")),
+                              column(6,  plotlyOutput("gauge_construction"))
                             ),
                             fluidRow(
-                              column(6, h3("Croissance Démographique"), plotlyOutput("gauge_demo"))
+                              column(6,  plotlyOutput("gauge_demo"))
                             )
                           )
                  )
@@ -529,49 +534,63 @@ server <- function(input, output, session) {
                   group = "selection")
   })
   
-  # Fonction pour créer un graphique de jauge
   create_gauge_plotly <- function(value, min_val, max_val, title) {
     angle <- pi * (1 - (value - min_val) / (max_val - min_val))  # Calcul de l'angle
     
-    x_end <- 0.5 + 0.35 * cos(angle)  # Raccourcir un peu la flèche pour la remonter
-    y_end <- 0.25 + 0.35 * sin(angle)  # Augmenter la position de départ pour qu'elle soit plus haute
+    x_end <- 0.5 + 0.33 * cos(angle)  # Ajustement de la flèche
+    y_end <- 0.32 + 0.33 * sin(angle)  # Ajustement de la hauteur
     
     fig <- plot_ly(
       type = "indicator",
       mode = "gauge",
       value = value,
-      title = list(text = title, font = list(size = 14)),  # Réduire la taille du titre
+      domain = list(x = c(0, 1), y = c(0, 1)),  
+      title = list(text = title, font = list(size = 18, color = "black"), x = 0.5, y = 1.2),  
       gauge = list(
-        axis = list(range = list(min_val, max_val)),  # Plage de la jauge
-        bar = list(color = "transparent"),  # Retirer la barre noire centrale
+        axis = list(range = list(min_val, max_val)),  
+        bar = list(color = "transparent"),  
         steps = list(
-          list(range = c(min_val, min_val + (max_val - min_val) * 0.5), color = "green"),  # Zone verte
-          list(range = c(min_val + (max_val - min_val) * 0.5, min_val + (max_val - min_val) * 0.75), color = "yellow"),  # Zone jaune
-          list(range = c(min_val + (max_val - min_val) * 0.75, max_val), color = "red")  # Zone rouge
+          list(range = c(min_val, min_val + (max_val - min_val) * 0.5), color = "#d0e1f9"),  
+          list(range = c(min_val + (max_val - min_val) * 0.5, min_val + (max_val - min_val) * 0.75), color = "#7bafd4"),  
+          list(range = c(min_val + (max_val - min_val) * 0.75, max_val), color = "#08306b")  
         )
       )
     ) %>%
       layout(
+        width = 360, height = 290,  # 📌 Ajustement de la taille pour éviter les collisions
+        margin = list(l = 15, r = 15, t = 40, b = 40),  # 📌 Ajout de marge inférieure pour plus d'espace
         shapes = list(
-          list(
+          list(  # Flèche noire
             type = "line",
-            x0 = 0.5, y0 = 0.25,  # Centre de la jauge (remonté)
-            x1 = x_end, y1 = y_end,  # Pointe de la flèche
-            line = list(color = "black", width = 6)  # Largeur et couleur de la flèche
+            x0 = 0.5, y0 = 0.32,  
+            x1 = x_end, y1 = y_end,  
+            line = list(color = "black", width = 6)  
           ),
-          list(  # Ajout du cercle central pour améliorer l’esthétique
+          list(  # Cercle central
             type = "circle",
             xref = "paper", yref = "paper",
-            x0 = 0.48, x1 = 0.52, y0 = 0.23, y1 = 0.27,
+            x0 = 0.48, x1 = 0.52, y0 = 0.3, y1 = 0.34,
             fillcolor = "black",
             line = list(color = "black")
           )
         ),
         annotations = list(
-          list(
-            x = 0.5, y = 0.1,  # Position du texte sous la flèche
-            text = paste0("<b>", round(value, 2), "</b>"),  # Affichage du chiffre en gras
-            font = list(size = 18),  # Taille réduite du chiffre
+          list(  # 📌 Valeur actuelle sous la flèche
+            x = 0.5, y = 0.05,  
+            text = paste0("<b>", round(value, 2), "</b>"),  
+            font = list(size = 20),  
+            showarrow = FALSE
+          ),
+          list(  # 📌 Min à gauche avec label
+            x = 0.2, y = -0.15,  # 📌 Ajusté plus bas pour éviter les collisions
+            text = paste0("<b>Min = ", round(min_val, 2), "</b>"),
+            font = list(size = 12),  # 📌 Réduction de la taille du texte
+            showarrow = FALSE
+          ),
+          list(  # 📌 Max à droite avec label
+            x = 0.8, y = -0.15,  # 📌 Ajusté plus bas pour éviter les collisions
+            text = paste0("<b>Max = ", round(max_val, 2), "</b>"),
+            font = list(size = 12),  # 📌 Réduction de la taille du texte
             showarrow = FALSE
           )
         )
