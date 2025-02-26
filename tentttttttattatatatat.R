@@ -6,20 +6,21 @@ library(dplyr)
 library(shinythemes)
 library(ggplot2)
 library(plotly)
-library(DT)
+library(rmarkdown)
+library(htmlwidgets)
+library(webshot)
+library(xml2)
+library(webshot2)
 
 # Charger les données des revenus, chômage et transport
 data <- read_xlsx("/Users/pierrequintindekercadio/Desktop/shinny/TAUX CHOMAGE FRANCE _ ESPAGNE T4 2024.xlsx")
-table_resumee <- read_xlsx("/Users/pierrequintindekercadio/Desktop/table_resumee.xlsx")
+
 # Normaliser les codes départementaux
 data$Code <- as.character(data$Code)
 data$Code <- ifelse(nchar(data$Code) == 1, paste0("0", data$Code), data$Code)
 data$Revenu <- as.numeric(data$Revenu)
-
 data$Transport <- as.numeric(data$Transport)
 data$construction <- as.numeric(data$construction)
-
-
 
 # Ajouter des valeurs pour la Corse si nécessaire
 if (!"2A" %in% data$Code) {
@@ -46,9 +47,6 @@ departements_sf <- departements_sf %>%
     Transport = ifelse(is.na(Transport), 0, Transport),
     construction = ifelse(is.na(construction), 0, construction)
   )
-
-print(colnames(departements_sf))  # Liste des colonnes disponibles
-
 
 # Création des palettes de couleurs
 bins_revenu <- c(19000, 20000, 21000, 22000, 23000, 24000, 25000, Inf)
@@ -87,241 +85,198 @@ chomage_text <- paste("Département avec le taux de chômage le plus élevé :",
 transport_text <- paste("Département avec le plus bas indice de transport :", min_transport_dep$nom, "(", round(min_transport_dep$Transport, 0), ")")
 construction_text <- paste("Département avec le plus bas taux de construction :", min_construction_dep$nom, "(", round(min_construction_dep$construction, 2), ")")
 demo_text <- paste("Département avec le plus bas taux démographique :", max_demo_dep$nom, "(", round(max_demo_dep$Demo, 2), ")")
-
-# Calcul des moyennes nationales des indicateurs
-moyenne_nationale <- departements_sf %>%
-  summarise(
-    Chomage = mean(Chomage, na.rm = TRUE),
-    Revenu = mean(Revenu, na.rm = TRUE),
-    Transport = mean(Transport, na.rm = TRUE),
-    Construction = mean(construction, na.rm = TRUE),
-    Demo = mean(Demo, na.rm = TRUE)
-  )
-
-
 # Interface utilisateur
 
-ui <- navbarPage(
-  title = div(
-    style = "width: 100%; text-align: center; font-size: 22px; font-weight: bold;",
-    "Comparaison Socio-Économique des départements français en 2022"
-  ),
-  theme = shinytheme("flatly"),
-  
-  
-  # 📌 Ajout de CSS pour justifier le texte
-  tags$head(
-    tags$style(HTML("
-      .justified-text {
-        text-align: justify;
-      }
-    "))
-  ),
-  
-  tabPanel("Accueil",
-           fluidPage(
-             div("Présentation", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
-             fluidRow(
-               column(4, 
-                      h2("Description de l'étude"),
-                      p("Cette étude propose une analyse socio-économique des 96 départements de la métropole française afin d’accompagner les décideurs politiques dans l’identification des territoires nécessitant des investissements prioritaires. L’objectif est de favoriser une répartition plus équitable des ressources et de réduire les inégalités territoriales.", class = "justified-text"),
-                      
-                      h2("Plan de l’étude"),
-                      p("- ", strong("Carte des Revenus"), " : Analyse des niveaux de revenus par département afin d’identifier les disparités économiques et sociales entre les territoires.", class = "justified-text"),
-                      p("- ", strong("Carte du Chômage"), " : Visualisation des taux de chômage départementaux pour repérer les zones où l’emploi est le plus fragile.", class = "justified-text"),
-                      p("- ", strong("Carte du Transport"), " : Analyse des infrastructures de transport et de leur accessibilité afin de comprendre leur rôle dans le développement économique et social.", class = "justified-text"),
-                      p("- ", strong("Carte de la Construction"), " : Étude des dynamiques de construction et d’urbanisation pour mesurer leur impact sur l’aménagement du territoire et la croissance locale.", class = "justified-text"),
-                      p("- ", strong("Carte de la Démographie"), " : Analyse des évolutions démographiques pour mieux comprendre les tendances de peuplement et leurs implications socio-économiques.", class = "justified-text"),
-                      p("- ", strong("Tableau de Bord Graphique"), " : Synthèse visuelle des indicateurs clés pour une analyse comparative des départements français.", class = "justified-text"), 
-                      p("-", strong("Annexe"), ": Ensemble des données des départements français.", class = "justified-text")
-               ),
-               column(8, 
-                      div(style = "display: flex; justify-content: center;"), leafletOutput("map_general", height = "600px"))
-             )
-           )
-  ),
-  
-  
-  tabPanel("Carte des Revenus",
-           fluidPage(
-             titlePanel("Indicateur Économique - Revenus"),
-             p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures. Vous retrouverez le département avec le revenu le plus faible encadré en rouge sur la carte de la France à droite."),
-             
-             # Sélection du département
-             selectInput("select_departement_revenu", "Sélectionnez un département :", 
-                         choices = unique(departements_sf$nom), selected = "Paris"),
-             
-             textOutput("info_revenu"),
-             
-             fluidRow(
-               column(6,
-                      h3("Carte de l'Ile de France des Revenus par habitant", style = "text-align: center;"),
-                      
-                      leafletOutput("idf_carte_revenu", height = "600px")
-               ),
-               column(6, 
-                      h3("Carte francaise des Revenus par département", style = "text-align: center;"),
-                      
-                      leafletOutput("map_revenu", height = "600px"),
-                      
-               )
-               
-             )
-           ),
-           p(revenu_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
-  ),
-  
-  
-  
-  tabPanel("Carte du Chômage",
-           fluidPage(
-             titlePanel("Indicateur du taux de Chômage"),
-             p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive. Vous retrouverez le département avec le chomage le plus élevé encadré en rouge sur la carte de la France à droite."),
-             
-             # Sélection du département
-             selectInput("select_departement_chomage", "Sélectionnez un département :", 
-                         choices = unique(departements_sf$nom), selected = "Paris"),
-             textOutput("info_chomage"),
-             
-             fluidRow(
-               column(6,
-                      h3("Carte de l'Ile de France du taux de Chômage", style = "text-align: center;"),
-                      
-                      leafletOutput("idf_carte_chomage", height = "600px")
-               ),
-               column(6, 
-                      h3("Carte française du taux de chômage par département", style = "text-align: center;"),
-                      
-                      leafletOutput("map_chomage", height = "600px")
-               )
-             )
-           ), 
-           p(chomage_text, style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
-  ),
-  
-  tabPanel("Carte du Transport",
-           fluidPage(
-             titlePanel("Indicateur de Transport"),
-             p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports en commun dans un département. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région. Vous retrouverez le département avec l'indice de transport le plus faible encadré en rouge sur la carte de la France à droite."),
-             
-             # Sélection du département
-             selectInput("select_departement_transport", "Sélectionnez un département :", 
-                         choices = unique(departements_sf$nom), selected = "Paris"),
-             textOutput("info_transport"),
-             fluidRow(
-               column(6,
-                      h3("Carte de l'Ile de France de l'indice de Transport", style = "text-align: center;"),
-                      
-                      leafletOutput("idf_carte_transport", height = "600px")
-               ),
-               column(6, 
-                      h3("Carte française de l'indice de transport par département", style = "text-align: center;"),
-                      
-                      leafletOutput("map_transport", height = "600px")
-               )
-             )
-           ), 
-           p(transport_text,style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;"),
-  ),
-  
-  tabPanel("Carte de la Construction",
-           fluidPage(
-             titlePanel("Indicateur de Construction"),
-             p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire. Vous retrouverez le département avec le taux de construction le plus faible encadré en rouge sur la carte de la France à droite."),
-             
-             # Sélection du département
-             selectInput("select_departement_construction", "Sélectionnez un département :", 
-                         choices = unique(departements_sf$nom), selected = "Paris"),
-             textOutput("info_construction"),
-             fluidRow(
-               column(6,
-                      h3("Carte de l'Ile de France de l'indice de Construction", style = "text-align: center;"),
-                      
-                      leafletOutput("idf_carte_construction", height = "600px")
-               ),
-               column(6, 
-                      h3("Carte française de l'indice de Construction par département", style = "text-align: center;"),
-                      
-                      leafletOutput("map_construction", height = "600px")
-               )
-             )
-           ), 
-           p(construction_text,style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;"),
-  ), 
-  tabPanel("Carte de la Démographie",
-           fluidPage(
-             titlePanel("Indicateur Démographique"),
-             p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures.Vous retrouverez le département avec le taux de croissance démographique le plus faible encadré en rouge sur la carte de la France à droite."),
-             
-             # Sélection du département
-             fluidRow(
-               column(4, 
-                      selectInput("select_departement_demo", "Sélectionnez un département :", 
-                                  choices = unique(departements_sf$nom), selected = "Paris")
-               )
-             ),
-             textOutput("info_demo"),
-             
-             # Cartes alignées côte à côte
-             fluidRow(
-               column(6, 
-                      h3("Carte de l'Ile de France du taux de croissance Démographique", style = "text-align: center;"),
-                      leafletOutput("idf_carte_demo", height = "600px")
-               ),
-               column(6, 
-                      h3("Carte française du taux de croissance Démographique par département", style = "text-align: center;"),
-                      leafletOutput("map_demo", height = "600px")
-               )
-             )
-             
-             
-           ), p(demo_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
-  ), 
-  
-  tabPanel("Tableau de Bord Graphique",
-           fluidPage(
-             titlePanel("Visualisation des Indicateurs Socio-Économiques"),
-             p("Cette section propose une visualisation interactive des indicateurs socio-économiques sous forme de jauges dynamiques. Chaque jauge permet de situer un département sélectionné par rapport aux autres départements français, en affichant la valeur minimale et maximale observée à l’échelle nationale.
-Grâce au bouton Télécharger le Rapport, vous pouvez générer un fichier PDF contenant l’emplacement du département sélectionné sur une carte, toutes ses données socio-économiques et un tableau avec la moyenne nationale des départements français."),
-             
-             # Sélection du département
-             fluidRow(
-               column(4, 
-                      selectInput("select_departement_graph", "Sélectionnez un département :", 
-                                  choices = unique(departements_sf$nom), selected = "Paris")
-               )
-             ),
-             div(style = "text-align: right; margin-top: -20px; margin-bottom: 20px;",
-                 downloadButton("download_dashboard", 
-                                shiny::HTML("<span style='font-weight: bold;'> Télécharger le Rapport </span>"), 
-                                style = "width: 250px; height: 50px; background: #D29B42; color: white; 
+ui <- navbarPage("Comparaison Socio-Économique des départements francais en 2022", theme = shinytheme("flatly"),
+                 
+                 
+                 tabPanel("Accueil",
+                          fluidPage(
+                            div("Présentation", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
+                            fluidRow(
+                              column(4, 
+                                     
+                                     h2("Description de l'étude"),
+                                     p("Cette étude propose une analyse socio-économique des 96 départements de la métropole française afin d’accompagner les décideurs politiques dans l’identification des territoires nécessitant des investissements prioritaires. L’objectif est de favoriser une répartition plus équitable des ressources et de réduire les inégalités territoriales."),
+                                     
+                                     h2("Plan de l’étude"),
+                                     p("- ", strong("Carte du Chômage"), " : Visualisation des taux de chômage par département pour identifier les zones où l’emploi est le plus fragile."),
+                                     p("- ", strong("Carte des Revenus"), " : Comparaison des niveaux de revenus afin de mettre en évidence les disparités économiques entre territoires."),
+                                     p("- ", strong("Carte du Transport"), " : Analyse des infrastructures de transport et de leur accessibilité pour comprendre leur impact sur le développement économique."),
+                                     p("- ", strong("Carte de la Construction"), " : État des dynamiques de construction et d’urbanisation pour évaluer le développement immobilier et son influence sur la croissance locale.")
+                              ),
+                              column(8, 
+                                     div(style = "display: flex; justify-content: center;"),leafletOutput("map_general", height = "600px"))
+                            )
+                          )
+                 ),
+                 tabPanel("Carte des Revenus",
+                          fluidPage(
+                            titlePanel("Indicateur Économique - Revenus"),
+                            
+                            # Sélection du département
+                            selectInput("select_departement_revenu", "Sélectionnez un département :", 
+                                        choices = unique(departements_sf$nom), selected = "Paris"),
+                            
+                            textOutput("info_revenu"),
+                            
+                            fluidRow(
+                              column(6,
+                                     h3("Carte de l'Ile de France des Revenus par habitant", style = "text-align: center;"),
+                                     
+                                     leafletOutput("idf_carte_revenu", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte francaise des Revenus par habitant", style = "text-align: center;"),
+                                     
+                                     leafletOutput("map_revenu", height = "600px"),
+                                     
+                              )
+                              
+                            )
+                          ),
+                          p(revenu_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
+                 ),
+                 
+                 
+                 
+                 tabPanel("Carte du Chômage",
+                          fluidPage(
+                            titlePanel("Indicateur du taux de Chômage"),
+                            
+                            # Sélection du département
+                            selectInput("select_departement_chomage", "Sélectionnez un département :", 
+                                        choices = unique(departements_sf$nom), selected = "Paris"),
+                            textOutput("info_chomage"),
+                            
+                            fluidRow(
+                              column(6,
+                                     h3("Analyse du Taux de Chômage", style = "text-align: center;"),
+                                     
+                                     leafletOutput("idf_carte_chomage", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte du taux de Chômage", style = "text-align: center;"),
+                                     
+                                     leafletOutput("map_chomage", height = "600px")
+                              )
+                            )
+                          ), 
+                          p(chomage_text, style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
+                 ),
+                 
+                 tabPanel("Carte du Transport",
+                          fluidPage(
+                            titlePanel("Indicateur de Transport"),
+                            
+                            # Sélection du département
+                            selectInput("select_departement_transport", "Sélectionnez un département :", 
+                                        choices = unique(departements_sf$nom), selected = "Paris"),
+                            textOutput("info_transport"),
+                            fluidRow(
+                              column(6,
+                                     h3("Indice de Transport par Département", style = "text-align: center;"),
+                                     
+                                     leafletOutput("idf_carte_transport", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte du taux de Transport", style = "text-align: center;"),
+                                     
+                                     leafletOutput("map_transport", height = "600px")
+                              )
+                            )
+                          ), 
+                          p(transport_text,style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;"),
+                 ),
+                 
+                 tabPanel("Carte de la Construction",
+                          fluidPage(
+                            titlePanel("Indicateur de Construction"),
+                            
+                            # Sélection du département
+                            selectInput("select_departement_construction", "Sélectionnez un département :", 
+                                        choices = unique(departements_sf$nom), selected = "Paris"),
+                            textOutput("info_construction"),
+                            fluidRow(
+                              column(6,
+                                     h3("Taux de Construction par Département", style = "text-align: center;"),
+                                     
+                                     leafletOutput("idf_carte_construction", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte du taux de Construction", style = "text-align: center;"),
+                                     
+                                     leafletOutput("map_construction", height = "600px")
+                              )
+                            )
+                          ), 
+                          p(construction_text,style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;"),
+                 ), 
+                 tabPanel("Carte de la Démographie",
+                          fluidPage(
+                            titlePanel("Indicateur Démographique"),
+                            
+                            # Sélection du département
+                            fluidRow(
+                              column(4, 
+                                     selectInput("select_departement_demo", "Sélectionnez un département :", 
+                                                 choices = unique(departements_sf$nom), selected = "Paris")
+                              )
+                            ),
+                            textOutput("info_demo"),
+                            
+                            # Cartes alignées côte à côte
+                            fluidRow(
+                              column(6, 
+                                     h3("Carte Démographique de l'Ile de France", style = "text-align: center;"),
+                                     leafletOutput("idf_carte_demo", height = "600px")
+                              ),
+                              column(6, 
+                                     h3("Carte Démographique de la France", style = "text-align: center;"),
+                                     leafletOutput("map_demo", height = "600px")
+                              )
+                            )
+                            
+              
+                          ), p(demo_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
+                 ), 
+                 tabPanel("Tableau de Bord Graphique",
+                          fluidPage(
+                            titlePanel("Visualisation des Indicateurs Socio-Économiques"),
+                            
+                            # Sélection du département
+                            fluidRow(
+                              column(4, 
+                                     selectInput("select_departement_graph", "Sélectionnez un département :", 
+                                                 choices = unique(departements_sf$nom), selected = "Paris")
+                              )
+                            ),
+                            div(style = "text-align: right; margin-top: -20px; margin-bottom: 20px;",
+                                downloadButton("download_dashboard", 
+                                               shiny::HTML("<span style='font-weight: bold;'>📄 Télécharger le Rapport en PDF</span>"), 
+                                               style = "width: 250px; height: 50px; background: #D29B42; color: white; 
                               padding: 10px 15px; border-radius: 8px;
                               font-size: 16px; font-weight: bold;"),
-                 
-                 # Affichage dynamique des jauges
-                 fluidRow(
-                   column(6,  plotlyOutput("gauge_chomage")),
-                   column(6,  plotlyOutput("gauge_revenu"))
-                 ),
-                 fluidRow(
-                   column(6, plotlyOutput("gauge_transport")),
-                   column(6,  plotlyOutput("gauge_construction"))
-                 ),
-                 fluidRow(
-                   column(6,  plotlyOutput("gauge_demo"))
-                 ),
-                 
-             ), 
-           ),
-           
-  ), 
-  tabPanel("Annexe",
-           fluidPage(
-             titlePanel("Tableau Résumé des Indicateurs Socio-Économiques"),
-             DTOutput("table_resumee")
-           )
-  )
+                            
+                            # Affichage dynamique des jauges
+                            fluidRow(
+                              column(6,  plotlyOutput("gauge_chomage")),
+                              column(6,  plotlyOutput("gauge_revenu"))
+                            ),
+                            fluidRow(
+                              column(6, plotlyOutput("gauge_transport")),
+                              column(6,  plotlyOutput("gauge_construction"))
+                            ),
+                            fluidRow(
+                              column(6,  plotlyOutput("gauge_demo"))
+                            ),
+                            
+                            
+                          )
+                 )
+                 )
 )
+
 
 
 # Serveur
@@ -343,7 +298,7 @@ server <- function(input, output, session) {
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")) %>%
       addPolygons(data = highest_chomage_dep, color = "red", weight = 3, fillOpacity = 0, 
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")) %>%
-      addLegend(position = "bottomleft", pal = pal_chomage, values = ~Chomage, title = "Taux de Chômage (%)",
+      addLegend(position = "topright", pal = pal_chomage, values = ~Chomage, title = "Taux de Chômage (%)",
                 labFormat = labelFormat(suffix = " %"), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -475,7 +430,7 @@ server <- function(input, output, session) {
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de Construction :", round(construction, 2))) %>%
       addPolygons(data = min_construction_dep, color = "red", weight = 3, fillOpacity = 0, 
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de Construction :", round(construction, 2))) %>%
-      addLegend(position = "bottomleft", pal = pal_construction, values = ~construction, title = "Taux de Construction (%)",
+      addLegend(position = "bottomleft", pal = pal_construction, values = ~construction, title = "Taux de Construction",
                 labFormat = labelFormat(suffix = ""), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -540,7 +495,7 @@ server <- function(input, output, session) {
       
       addLegend(position = "bottomleft", 
                 pal = colorNumeric("Blues", departements_sf$Demo), 
-                values = departements_sf$Demo, title = "Croissance Démographique (%)",
+                values = departements_sf$Demo, title = "Taux de Croissance Démographique (%)",
                 labFormat = labelFormat(suffix = " %"), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -583,6 +538,7 @@ server <- function(input, output, session) {
                   group = "selection")
   })
   
+  
   create_gauge_plotly <- function(value, min_val, max_val, title) {
     angle <- pi * (1 - (value - min_val) / (max_val - min_val))  # Calcul de l'angle
     
@@ -593,29 +549,29 @@ server <- function(input, output, session) {
       type = "indicator",
       mode = "gauge",
       value = value,
-      domain = list(x = c(0, 1), y = c(0, 1)),  
-      title = list(text = title, font = list(size = 18, color = "black"), x = 0.5, y = 1.2),  
+      domain = list(x = c(0, 1), y = c(0, 1)),  # 📌 Assurer un centrage total
+      title = list(text = title, font = list(size = 16), x = 0.5, y = 0.9),  # 📌 Centrage du titre
       gauge = list(
-        axis = list(range = list(min_val, max_val)),  
-        bar = list(color = "transparent"),  
+        axis = list(range = list(min_val, max_val), tickmode = "array", tickvals = c(min_val, max_val)),  # Ajout des ticks Min & Max
+        bar = list(color = "transparent"),  # Supprimer la barre noire centrale
         steps = list(
-          list(range = c(min_val, min_val + (max_val - min_val) * 0.5), color = "#d0e1f9"),  
-          list(range = c(min_val + (max_val - min_val) * 0.5, min_val + (max_val - min_val) * 0.75), color = "#7bafd4"),  
-          list(range = c(min_val + (max_val - min_val) * 0.75, max_val), color = "#08306b")  
+          list(range = c(min_val, min_val + (max_val - min_val) * 0.5), color = "#d0e1f9"),  # 📌 Bleu clair
+          list(range = c(min_val + (max_val - min_val) * 0.5, min_val + (max_val - min_val) * 0.75), color = "#7bafd4"),  # 📌 Bleu moyen
+          list(range = c(min_val + (max_val - min_val) * 0.75, max_val), color = "#08306b")  # 📌 Bleu foncé
         )
       )
     ) %>%
-      layout(
-        width = 360, height = 290,  # 📌 Ajustement de la taille pour éviter les collisions
-        margin = list(l = 15, r = 15, t = 40, b = 40),  # 📌 Ajout de marge inférieure pour plus d'espace
+      ggplotly(fig, width = 350, height = 280,
+    # 📌 Taille légèrement plus grande pour un meilleur équilibre
+        margin = list(l = 15, r = 15, t = 20, b = 30),  # 📌 Suppression des marges inutiles pour centrage
         shapes = list(
-          list(  # Flèche noire
+          list(
             type = "line",
-            x0 = 0.5, y0 = 0.32,  
-            x1 = x_end, y1 = y_end,  
-            line = list(color = "black", width = 6)  
+            x0 = 0.5, y0 = 0.32,  # 📌 Position légèrement plus haute
+            x1 = x_end, y1 = y_end,  # Pointe de la flèche
+            line = list(color = "black", width = 6)  # 📌 Largeur ajustée pour plus de clarté
           ),
-          list(  # Cercle central
+          list(  # Cercle central pour un meilleur rendu
             type = "circle",
             xref = "paper", yref = "paper",
             x0 = 0.48, x1 = 0.52, y0 = 0.3, y1 = 0.34,
@@ -624,22 +580,22 @@ server <- function(input, output, session) {
           )
         ),
         annotations = list(
-          list(  # 📌 Valeur actuelle sous la flèche
-            x = 0.5, y = 0.05,  
+          list(  # 📌 Texte sous la flèche (valeur actuelle)
+            x = 0.5, y = 0.07,  
             text = paste0("<b>", round(value, 2), "</b>"),  
-            font = list(size = 20),  
+            font = list(size = 18),  
             showarrow = FALSE
           ),
-          list(  # 📌 Min à gauche avec label
-            x = 0.2, y = -0.15,  # 📌 Ajusté plus bas pour éviter les collisions
-            text = paste0("<b>Min = ", round(min_val, 2), "</b>"),
-            font = list(size = 12),  # 📌 Réduction de la taille du texte
+          list(  # 📌 Ajout du minimum sur la gauche
+            x = 0.15, y = -0.05,
+            text = paste0("<b>", round(min_val, 2), "</b>"),
+            font = list(size = 14),
             showarrow = FALSE
           ),
-          list(  # 📌 Max à droite avec label
-            x = 0.8, y = -0.15,  # 📌 Ajusté plus bas pour éviter les collisions
-            text = paste0("<b>Max = ", round(max_val, 2), "</b>"),
-            font = list(size = 12),  # 📌 Réduction de la taille du texte
+          list(  # 📌 Ajout du maximum sur la droite
+            x = 0.85, y = -0.05,
+            text = paste0("<b>", round(max_val, 2), "</b>"),
+            font = list(size = 14),
             showarrow = FALSE
           )
         )
@@ -647,7 +603,6 @@ server <- function(input, output, session) {
     
     return(fig)
   }
-  
   
   
   
@@ -692,7 +647,7 @@ server <- function(input, output, session) {
   output$gauge_construction <- renderPlotly({
     req(input$select_departement_graph)
     selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
-    create_gauge_plotly(selected_dep$construction, min_construction(), max_construction(), "Indice de Construction")
+    create_gauge_plotly(selected_dep$construction, min_construction(), max_construction(), "Taux de Construction")
   })
   
   output$gauge_demo <- renderPlotly({
@@ -700,41 +655,6 @@ server <- function(input, output, session) {
     selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
     create_gauge_plotly(selected_dep$Demo, min_demo(), max_demo(), "Croissance Démographique (%)")
   })
-  output$gauge_demo <- renderPlotly({
-    req(input$select_departement_graph)
-    selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
-    create_gauge_plotly(selected_dep$Demo, min_demo(), max_demo(), "Croissance Démographique (%)")
-  })
-  output_pdf_map_path <- tempfile(fileext = ".png")  # Création d'un fichier temporaire
-  
-  output_pdf_map_path <- tempfile(fileext = ".png")  # Création d'un fichier temporaire
-  
-  generate_map <- function(selected_dep_name) {
-    req(selected_dep_name)  # Assurer qu'un département est bien sélectionné
-    
-    # 📌 Vérifier si le département sélectionné existe bien dans les données
-    selected_dep <- departements_sf %>% filter(nom == selected_dep_name)
-    
-    if (nrow(selected_dep) == 0) {
-      warning("Le département sélectionné n'existe pas dans departements_sf.")
-      return(NULL)
-    }
-    
-    # 📌 Générer la carte
-    map_plot <- ggplot(departements_sf) +
-      geom_sf(aes(fill = ifelse(nom == selected_dep_name, "Sélectionné", "Autres")), color = "black", size = 0.2) +
-      scale_fill_manual(values = c("Autres" = "lightblue", "Sélectionné" = "orange")) +
-      theme_void() +
-    
-      theme(legend.position = "none")
-    
-    # 📌 Sauvegarde en PNG
-    ggsave(output_pdf_map_path, map_plot, width = 6, height = 5, dpi = 300)
-    
-    return(output_pdf_map_path)
-  }
-  
-  
   output$download_dashboard <- downloadHandler(
     filename = function() {
       paste0("tableau_de_bord_", Sys.Date(), ".pdf")
@@ -742,43 +662,16 @@ server <- function(input, output, session) {
     content = function(file) {
       library(rmarkdown)
       
-      req(input$select_departement_graph)  # Vérifie qu'un département est sélectionné
+      req(input$select_departement_graph)
       
-      selected_dep_name <- input$select_departement_graph  # Nom du département sélectionné
-      
-      # 📌 Générer la carte avec le département en orange
-      map_path <- generate_map(selected_dep_name)
-      
-      if (is.null(map_path)) {
-        stop("Erreur : Impossible de générer la carte.")
-      }
-      
-      # 📌 Récupération des valeurs du département sélectionné
-      selected_dep <- departements_sf %>% filter(nom == selected_dep_name)
-      
-      if (nrow(selected_dep) == 0) {
-        stop("Erreur : Département sélectionné introuvable dans les données.")
-      }
-      
-      # 📌 Calcul des moyennes nationales
-      moyenne_nationale <- departements_sf %>%
-        summarise(
-          Chomage = mean(Chomage, na.rm = TRUE),
-          Revenu = mean(Revenu, na.rm = TRUE),
-          Transport = mean(Transport, na.rm = TRUE),
-          Construction = mean(construction, na.rm = TRUE),
-          Demo = mean(Demo, na.rm = TRUE)
-        ) %>%
-        mutate(
-          Chomage = round(Chomage, 1),
-          Revenu = round(Revenu, 0),
-          Transport = round(Transport, 0),
-          Construction = round(Construction, 2),
-          Demo = round(Demo, 2)
-        )
+      selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
       
       output_pdf_path <- tempfile(fileext = ".pdf")
-      rmd_file <- "/Users/pierrequintindekercadio/Desktop/shinny/www/dashboard_template.Rmd"
+      
+      print("🔍 Génération du PDF en cours...")
+      
+      # Vérifie que le fichier Rmd existe avant d'essayer de le compiler
+      rmd_file <- "www/dashboard_template.Rmd"
       
       if (!file.exists(rmd_file)) {
         stop(paste0("❌ Le fichier RMarkdown n'existe pas à l'emplacement : ", rmd_file))
@@ -790,43 +683,41 @@ server <- function(input, output, session) {
           output_format = "pdf_document",
           output_file = output_pdf_path,
           params = list(
-            # 📌 Indicateurs pour le département sélectionné
-            departement = selected_dep_name,
+            departement = input$select_departement_graph,
             chomage = round(selected_dep$Chomage, 1),
-            revenu = format(round(selected_dep$Revenu, 0), big.mark = " "),
+            revenu = round(selected_dep$Revenu, 0),
             transport = round(selected_dep$Transport, 0),
             construction = round(selected_dep$construction, 2),
-            demo = round(selected_dep$Demo, 2),
-            # 📌 Moyenne nationale
-            chomage_moy = moyenne_nationale$Chomage,
-            revenu_moy = format(moyenne_nationale$Revenu, big.mark = " "),
-            transport_moy = moyenne_nationale$Transport,
-            construction_moy = moyenne_nationale$Construction,
-            demo_moy = moyenne_nationale$Demo,
-            # 📌 Ajout de la carte
-            map_path = map_path
+            demo = round(selected_dep$Demo, 2)
           ),
           envir = new.env(parent = globalenv())
         )
         
+        # Vérifie si le fichier a été généré
         if (!file.exists(output_pdf_path)) {
           stop("❌ PDF introuvable après génération.")
         }
         
+        print(paste0("✅ PDF généré avec succès : ", output_pdf_path))
         file.copy(output_pdf_path, file, overwrite = TRUE)
         
       }, error = function(e) {
-        stop("Erreur dans la génération du PDF : ", e$message)
+        print(paste0("❌ Erreur dans la génération du PDF : ", e$message))
+        stop("Erreur dans la génération du PDF.")
       })
+      
+      
     }
   )
   
   
   
-  output$table_resumee <- renderDT({
-    datatable(table_resumee, options = list(pageLength = 10))
-  })
+  
 }
+  
+  
+  
+
 
 # Lancer l'application
 shinyApp(ui, server)

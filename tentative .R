@@ -12,11 +12,6 @@ View(data)
 
 
 
-library(shiny)
-library(leaflet)
-library(sf)
-library(tidyverse)
-
 # Charger les départements de France (GeoJSON)
 departements <- st_read("https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson")
 
@@ -204,4 +199,118 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
+
+
+
+
+library(shiny)
+library(leaflet)
+library(sf)
+library(dplyr)
+
+# Charger et nettoyer les données
+data <- data %>%
+  mutate(Code = trimws(as.character(Code)))
+
+# Ajouter les valeurs fixes pour la Corse
+if (!"2A" %in% data$Code) {
+  data <- data %>% add_row(Code = "2A", Libellé = "Corse-du-Sud", Chomage = 6.1)
+}
+if (!"2B" %in% data$Code) {
+  data <- data %>% add_row(Code = "2B", Libellé = "Haute-Corse", Chomage = 7)
+}
+
+# Charger le fichier GeoJSON
+geojson_url <- "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson"
+departements_sf <- st_read(geojson_url)
+
+departements_sf <- departements_sf %>%
+  mutate(code = trimws(as.character(code)))
+
+# Vérifier les différences entre les codes
+print(setdiff(departements_sf$code, data$Code))
+print(setdiff(data$Code, departements_sf$code))
+
+# Joindre les données
+departements_sf <- left_join(departements_sf, data, by = c("code" = "Code"))
+
+# Vérifier si la colonne Chomage est présente
+if (!"Chomage" %in% colnames(departements_sf)) {
+  stop("La colonne 'Chomage' n'est pas présente après la jointure. Vérifiez les codes.")
+}
+
+# Déterminer le département avec le taux de chômage le plus élevé
+highest_chomage <- departements_sf %>% filter(!is.na(Chomage)) %>% 
+  arrange(desc(Chomage)) %>% 
+  slice(1) %>% 
+  pull(nom)
+
+# Palette pour la carte
+bins <- c(0, 6.5, 8.5, 12.4, Inf)
+labels <- c("Moins de 6,5%", "De 6,5% à moins de 8,5%", "De 8,5% à moins de 12,4%", "12,4% ou plus")
+colors <- c("#f2dede", "#f9bfbf", "#e47676", "#a50f15")
+
+pal <- colorBin(palette = colors, bins = bins, na.color = "transparent", domain = departements_sf$Chomage)
+
+ui <- fluidPage(
+  titlePanel("Indicateur Socio-Économique"),
+  
+  fluidRow(
+    column(6,  
+           h3("Analyse du Taux de Chômage"),
+           p("Cette application affiche une carte des départements français avec le taux de chômage en pourcentage."),
+           p("Le département avec le taux de chômage le plus élevé est :"),
+           h4(highest_chomage),
+           div(class = "idf-map-container",
+               h4("Focus sur l'Île-de-France"),
+               leafletOutput("idf_carte", height = "350px")
+           )
+    ),
+    column(6, id = "carte-container", 
+           leafletOutput("carte", height = "700px")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$carte <- renderLeaflet({
+    leaflet(departements_sf) %>%
+      addPolygons(
+        fillColor = ~pal(Chomage),
+        color = "black",
+        weight = 1,
+        fillOpacity = 0.8,
+        label = ~paste(nom, "<br> Taux de chômage :", round(Chomage, 1), "%"),
+        popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")
+      ) %>%
+      addLegend(
+        position = "topright",
+        pal = pal,
+        values = ~Chomage,
+        title = "Taux de Chômage (%)",
+        labFormat = labelFormat(suffix = " %"),
+        opacity = 1
+      ) %>%
+      setView(lng = 2.2137, lat = 46.2276, zoom = 6)
+  })
+  
+  output$idf_carte <- renderLeaflet({
+    selected_departements <- c("75", "77", "78", "91", "92", "93", "94", "95")
+    leaflet(departements_sf %>% filter(code %in% selected_departements)) %>%
+      addPolygons(
+        fillColor = ~pal(Chomage),
+        color = "black",
+        weight = 1,
+        fillOpacity = 0.8,
+        label = ~paste(nom, "<br> Taux de chômage :", round(Chomage, 1), "%"),
+        popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")
+      ) %>%
+      setView(lng = 2.35, lat = 48.85, zoom = 9)
+  })
+}
+
+shinyApp(ui, server)
+
 

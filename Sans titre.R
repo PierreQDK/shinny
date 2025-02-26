@@ -140,12 +140,12 @@ ui <- navbarPage(
              )
            )
   ),
-  
+
   
   tabPanel("Carte des Revenus",
            fluidPage(
              titlePanel("Indicateur Économique - Revenus"),
-             p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures. Vous retrouverez le département avec le revenu le plus faible encadré en rouge sur la carte de la France à droite."),
+             p("Le revenu moyen par habitant reflète le niveau de vie des populations et les inégalités économiques entre départements. Il permet d’identifier les territoires les plus aisés et ceux où les habitants disposent de moindres ressources financières. Ce critère est fondamental pour adapter les politiques publiques et orienter les investissements en matière de logement, d’éducation et d’infrastructures."),
              
              # Sélection du département
              selectInput("select_departement_revenu", "Sélectionnez un département :", 
@@ -160,7 +160,7 @@ ui <- navbarPage(
                       leafletOutput("idf_carte_revenu", height = "600px")
                ),
                column(6, 
-                      h3("Carte francaise des Revenus par département", style = "text-align: center;"),
+                      h3("Carte francaise des Revenus par habitant", style = "text-align: center;"),
                       
                       leafletOutput("map_revenu", height = "600px"),
                       
@@ -176,7 +176,7 @@ ui <- navbarPage(
   tabPanel("Carte du Chômage",
            fluidPage(
              titlePanel("Indicateur du taux de Chômage"),
-             p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive. Vous retrouverez le département avec le chomage le plus élevé encadré en rouge sur la carte de la France à droite."),
+             p("Le taux de chômage représente la proportion de la population active sans emploi et en recherche active de travail. Cet indicateur est essentiel pour évaluer la santé économique d’un territoire et identifier les zones où l’emploi est le plus fragile. Un taux de chômage élevé peut signaler des difficultés structurelles, tandis qu’un taux faible est souvent associé à une économie dynamique et attractive."),
              
              # Sélection du département
              selectInput("select_departement_chomage", "Sélectionnez un département :", 
@@ -185,12 +185,12 @@ ui <- navbarPage(
              
              fluidRow(
                column(6,
-                      h3("Carte de l'Ile de France du taux de Chômage", style = "text-align: center;"),
+                      h3("Carte de l'Ile de France du Taux de Chômage", style = "text-align: center;"),
                       
                       leafletOutput("idf_carte_chomage", height = "600px")
                ),
                column(6, 
-                      h3("Carte française du taux de chômage par département", style = "text-align: center;"),
+                      h3("Carte du taux de Chômage", style = "text-align: center;"),
                       
                       leafletOutput("map_chomage", height = "600px")
                )
@@ -202,7 +202,7 @@ ui <- navbarPage(
   tabPanel("Carte du Transport",
            fluidPage(
              titlePanel("Indicateur de Transport"),
-             p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports en commun dans un département. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région. Vous retrouverez le département avec l'indice de transport le plus faible encadré en rouge sur la carte de la France à droite."),
+             p("L’accessibilité et la qualité des transports jouent un rôle clé dans le développement d’un territoire. Le taux de transport mesure l'accessibilité aux transports en commun dans un département. Un bon réseau de transport améliore la mobilité des habitants, favorise le développement économique et réduit les disparités territoriales. À l’inverse, un déficit d’infrastructures peut freiner l’emploi et l’attractivité d’une région."),
              
              # Sélection du département
              selectInput("select_departement_transport", "Sélectionnez un département :", 
@@ -210,12 +210,12 @@ ui <- navbarPage(
              textOutput("info_transport"),
              fluidRow(
                column(6,
-                      h3("Carte de l'Ile de France de l'indice de Transport", style = "text-align: center;"),
+                      h3("Carte de l'Ile de France du taux de Transport", style = "text-align: center;"),
                       
                       leafletOutput("idf_carte_transport", height = "600px")
                ),
                column(6, 
-                      h3("Carte française de l'indice de transport par département", style = "text-align: center;"),
+                      h3("Carte du taux de Transport par Département", style = "text-align: center;"),
                       
                       leafletOutput("map_transport", height = "600px")
                )
@@ -227,7 +227,7 @@ ui <- navbarPage(
   tabPanel("Carte de la Construction",
            fluidPage(
              titlePanel("Indicateur de Construction"),
-             p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire. Vous retrouverez le département avec le taux de construction le plus faible encadré en rouge sur la carte de la France à droite."),
+             p("L’activité de construction indique le dynamisme immobilier et l’urbanisation d’un département durant les 10 dernières années. Un taux élevé traduit un fort développement urbain, souvent lié à une croissance économique et démographique. À l’inverse, une faible construction peut signaler un manque d’attractivité ou des restrictions foncières freinant l’expansion du territoire."),
              
              # Sélection du département
              selectInput("select_departement_construction", "Sélectionnez un département :", 
@@ -235,12 +235,12 @@ ui <- navbarPage(
              textOutput("info_construction"),
              fluidRow(
                column(6,
-                      h3("Carte de l'Ile de France de l'indice de Construction", style = "text-align: center;"),
+                      h3("Carte de l'Ile de France du taux de Construction", style = "text-align: center;"),
                       
                       leafletOutput("idf_carte_construction", height = "600px")
                ),
                column(6, 
-                      h3("Carte française de l'indice de Construction par département", style = "text-align: center;"),
+                      h3("Carte du taux de Construction par département", style = "text-align: center;"),
                       
                       leafletOutput("map_construction", height = "600px")
                )
@@ -251,7 +251,7 @@ ui <- navbarPage(
   tabPanel("Carte de la Démographie",
            fluidPage(
              titlePanel("Indicateur Démographique"),
-             p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures.Vous retrouverez le département avec le taux de croissance démographique le plus faible encadré en rouge sur la carte de la France à droite."),
+             p("Le taux de croissance démographique mesure l’évolution de la population d’un département durant les 10 dernières années. Une hausse rapide indique une région attractive en termes d’emplois et de qualité de vie, tandis qu’une baisse démographique peut révéler des difficultés économiques et un exode de la population. Cet indicateur permet d’anticiper les besoins en logements, services publics et infrastructures."),
              
              # Sélection du département
              fluidRow(
@@ -269,7 +269,7 @@ ui <- navbarPage(
                       leafletOutput("idf_carte_demo", height = "600px")
                ),
                column(6, 
-                      h3("Carte française du taux de croissance Démographique par département", style = "text-align: center;"),
+                      h3("Carte du taux de croissance Démographique par département", style = "text-align: center;"),
                       leafletOutput("map_demo", height = "600px")
                )
              )
@@ -277,12 +277,10 @@ ui <- navbarPage(
              
            ), p(demo_text,  style = "text-align: center; font-size: 28px; font-weight: bold; margin-top: 10px;")
   ), 
-  
+
   tabPanel("Tableau de Bord Graphique",
            fluidPage(
              titlePanel("Visualisation des Indicateurs Socio-Économiques"),
-             p("Cette section propose une visualisation interactive des indicateurs socio-économiques sous forme de jauges dynamiques. Chaque jauge permet de situer un département sélectionné par rapport aux autres départements français, en affichant la valeur minimale et maximale observée à l’échelle nationale.
-Grâce au bouton Télécharger le Rapport, vous pouvez générer un fichier PDF contenant l’emplacement du département sélectionné sur une carte, toutes ses données socio-économiques et un tableau avec la moyenne nationale des départements français."),
              
              # Sélection du département
              fluidRow(
@@ -314,13 +312,13 @@ Grâce au bouton Télécharger le Rapport, vous pouvez générer un fichier PDF 
              ), 
            ),
            
-  ), 
-  tabPanel("Annexe",
-           fluidPage(
-             titlePanel("Tableau Résumé des Indicateurs Socio-Économiques"),
-             DTOutput("table_resumee")
-           )
-  )
+), 
+tabPanel("Annexe",
+         fluidPage(
+           titlePanel("Tableau Résumé des Indicateurs Socio-Économiques"),
+           DTOutput("table_resumee")
+         )
+)
 )
 
 
@@ -343,7 +341,7 @@ server <- function(input, output, session) {
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")) %>%
       addPolygons(data = highest_chomage_dep, color = "red", weight = 3, fillOpacity = 0, 
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")) %>%
-      addLegend(position = "bottomleft", pal = pal_chomage, values = ~Chomage, title = "Taux de Chômage (%)",
+      addLegend(position = "topright", pal = pal_chomage, values = ~Chomage, title = "Taux de Chômage (%)",
                 labFormat = labelFormat(suffix = " %"), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -475,7 +473,7 @@ server <- function(input, output, session) {
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de Construction :", round(construction, 2))) %>%
       addPolygons(data = min_construction_dep, color = "red", weight = 3, fillOpacity = 0, 
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de Construction :", round(construction, 2))) %>%
-      addLegend(position = "bottomleft", pal = pal_construction, values = ~construction, title = "Taux de Construction (%)",
+      addLegend(position = "bottomleft", pal = pal_construction, values = ~construction, title = "Taux de Construction",
                 labFormat = labelFormat(suffix = ""), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -540,7 +538,7 @@ server <- function(input, output, session) {
       
       addLegend(position = "bottomleft", 
                 pal = colorNumeric("Blues", departements_sf$Demo), 
-                values = departements_sf$Demo, title = "Croissance Démographique (%)",
+                values = departements_sf$Demo, title = "Taux de Croissance Démographique (%)",
                 labFormat = labelFormat(suffix = " %"), opacity = 1) %>%
       setView(lng = 2.2137, lat = 46.2276, zoom = 6)
   })
@@ -692,7 +690,7 @@ server <- function(input, output, session) {
   output$gauge_construction <- renderPlotly({
     req(input$select_departement_graph)
     selected_dep <- departements_sf %>% filter(nom == input$select_departement_graph)
-    create_gauge_plotly(selected_dep$construction, min_construction(), max_construction(), "Indice de Construction")
+    create_gauge_plotly(selected_dep$construction, min_construction(), max_construction(), "Taux de Construction")
   })
   
   output$gauge_demo <- renderPlotly({
@@ -725,7 +723,7 @@ server <- function(input, output, session) {
       geom_sf(aes(fill = ifelse(nom == selected_dep_name, "Sélectionné", "Autres")), color = "black", size = 0.2) +
       scale_fill_manual(values = c("Autres" = "lightblue", "Sélectionné" = "orange")) +
       theme_void() +
-    
+      labs(title = paste("Carte de la France - Département sélectionné :", selected_dep_name)) +
       theme(legend.position = "none")
     
     # 📌 Sauvegarde en PNG

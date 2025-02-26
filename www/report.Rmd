@@ -1,0 +1,81 @@
+---
+title: "Rapport Socio-Économique Départemental"
+author: "Analyse Automatisée"
+date: "2025"
+output: pdf_document
+params:
+  departement: "Non spécifié"
+  chomage: 0
+  revenu: 0
+  transport: 0
+  construction: 0
+  demo: 0
+fontsize: 12pt
+geometry: margin=1in
+header-includes:
+   - \usepackage{graphicx}
+---
+
+\begin{center}
+\includegraphics[width=6cm]{logo.png}  # 📌 Remplace avec un vrai logo si nécessaire  
+\end{center}
+
+---
+
+## 📍 Département sélectionné : **`r params$departement`**
+
+Ce rapport présente une analyse socio-économique du département **`r params$departement`** basée sur les données les plus récentes.
+
+### 🔹 **Résumé des Indicateurs**
+| Indicateur            | Valeur |
+|----------------------|-------:|
+| 📊 **Taux de Chômage (%)** | `r params$chomage` % |
+| 💰 **Revenu Moyen (€)** | `r format(params$revenu, big.mark = " ")` |
+| 🚆 **Indice de Transport** | `r params$transport` |
+| 🏗️ **Taux de Construction (%)** | `r params$construction` |
+| 👥 **Croissance Démographique (%)** | `r params$demo` |
+
+---
+
+## 📊 **Visualisation des Indicateurs**
+
+### 📈 **1. Taux de Chômage**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+ggplot(data.frame(Indicateur = "Taux de Chômage", Valeur = params$chomage), aes(x = Indicateur, y = Valeur)) +
+  geom_bar(stat = "identity", fill = "red") +
+  geom_text(aes(label = paste0(Valeur, "%")), vjust = -0.5, size = 5) +
+  theme_minimal() +
+  labs(title = "Taux de Chômage", y = "Pourcentage", x = "")
+```
+
+```{r}
+ggplot(data.frame(Indicateur = "Revenu Moyen", Valeur = params$revenu), aes(x = Indicateur, y = Valeur)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  geom_text(aes(label = paste0(format(Valeur, big.mark = " "), " €")), vjust = -0.5, size = 5) +
+  theme_minimal() +
+  labs(title = "Revenu Moyen par Habitant", y = "Montant (€)", x = "")
+
+```
+
+
+
+
+
+```{r}
+ggplot(data.frame(Indicateur = "Indice de Transport", Valeur = params$transport), aes(x = Indicateur, y = Valeur)) +
+  geom_bar(stat = "identity", fill = "green") +
+  geom_text(aes(label = Valeur), vjust = -0.5, size = 5) +
+  theme_minimal() +
+  labs(title = "Indice de Transport", y = "Indice", x = "")
+
+```
+
+
+
+
+
+
+
+

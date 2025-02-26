@@ -1,0 +1,88 @@
+---
+title: "Analyse du département `r params$departement`"
+author: 
+- "Àlex CHAFES MARTORELL"
+- "Pierre QUINTIN de KERCADIO"
+output: 
+  pdf_document:
+    latex_engine: xelatex  
+header-includes:
+  - \usepackage{ragged2e}  
+  - \usepackage{caption}    
+  - \usepackage{booktabs}   
+params:
+  departement: "Non spécifié"
+  chomage: 0
+  revenu: 0
+  transport: 0
+  construction: 0
+  demo: 0
+  chomage_moy: 0
+  revenu_moy: 0
+  transport_moy: 0
+  construction_moy: 0
+  demo_moy: 0
+  map_path: ""
+---
+
+
+# Introduction
+
+Ce rapport présente une analyse socio-économique du département **`r params$departement`** basée sur les données de 2022. 
+Il présente plusieurs indicateurs clés : taux de chômage, revenu moyen, l'indice de transport, l'indice construction et croissance démographique. 
+Il inclut une carte situant le département, un tableau récapitulatif de ses indicateurs, ainsi qu’une comparaison avec la moyenne nationale.")
+
+
+# **Carte de France avec le département sélectionné `r params$departement`** 
+\begin{center}
+\includegraphics[width=0.8\textwidth]{`r params$map_path`}
+\end{center}
+
+\newpage
+
+# **Résumé des Indicateurs du département `r params$departement`**
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.3} % Ajustement de la hauteur des lignes
+\begin{tabular}{|l|r|}
+\hline
+Indicateur & Valeur \\
+\hline
+Taux de Chômage (\%) & `r params$chomage` \% \\
+Revenu Moyen (€) & `r format(params$revenu, big.mark = " ")` € \\
+Indice de Transport & `r params$transport` \\
+Indice de Construction  & `r params$construction` \\
+Croissance Démographique (\%) & `r params$demo` \\
+\hline
+\end{tabular}
+\caption{Indicateurs socio-économiques du département `r params$departement`}
+\end{table}
+
+
+# **Moyenne Nationale des Indicateurs**
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|r|}
+\hline
+Indicateur & Moyenne Nationale \\
+\hline
+Taux de Chômage (\%) & `r params$chomage_moy` \% \\
+Revenu Moyen (€) & `r format(params$revenu_moy, big.mark = " ")` € \\
+Indice de Transport & `r params$transport_moy` \\
+Indice de Construction  & `r params$construction_moy` \\
+Croissance Démographique (\%) & `r params$demo_moy` \\
+\hline
+\end{tabular}
+\caption{Moyenne nationale des indicateurs socio-économiques}
+\end{table}
+
+
+
+
+
+
+
+
+

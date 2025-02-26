@@ -78,14 +78,15 @@ construction_text <- paste("Département avec le plus haut taux de construction 
 construction_text2 <- paste("Département avec le plus bas taux de construction :", min_construction_dep$nom, "(", round(min_construction_dep$construction, 2), ")")
 
 # Interface utilisateur
-ui <- navbarPage("Comparaison Socio-Économique", theme = shinytheme("flatly"),
+ui <- navbarPage("Comparaison Socio-Économique des départements francais", theme = shinytheme("flatly"),
                  tabPanel("Accueil",
                           fluidPage(
-                            div("Comparaison des Départements", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
+                            div("Comparaison des Départements français", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
                             fluidRow(
                               column(4, h3("Description du projet"),
                                      p("Ce projet vise à comparer les départements français à travers diverses statistiques et caractéristiques régionales."),
-                                     p("Sélectionnez un département sur la carte pour voir ses informations.")),
+                                     p("L'étude porte sur: la carte du chomage, la carte des revenus, la carte des transports et la carte des constructions"),
+                                     p("Pour finir vous retrouverez différents graphiques par départements")),
                               column(8, leafletOutput("map_general", height = "600px"))
                             )
                           )

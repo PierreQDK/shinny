@@ -79,8 +79,16 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                           fluidPage(
                             div("Présentation", class = "title", style = "text-align:center; font-size: 36px; font-weight: bold; margin-bottom: 20px;"),
                             fluidRow(
-                              column(4, h3("Description"),
-                                     p("Cette étude vise à comparer les 96 départements de la métropole francaise pour aider les décideurs politiques à choisir dans quel département il esrt nécesaire d'investir pour avoir plus d'égalité.")),
+                              column(4, 
+                                     h2("Description de l'étude"),
+                                     p("Cette étude propose une analyse socio-économique des 96 départements de la métropole française afin d’accompagner les décideurs politiques dans l’identification des territoires nécessitant des investissements prioritaires. L’objectif est de favoriser une répartition plus équitable des ressources et de réduire les inégalités territoriales."),
+                                     
+                                     h2("Plan de l’étude"),
+                                     p("- ", strong("Carte du Chômage"), " : Visualisation des taux de chômage par département pour identifier les zones où l’emploi est le plus fragile."),
+                                     p("- ", strong("Carte des Revenus"), " : Comparaison des niveaux de revenus afin de mettre en évidence les disparités économiques entre territoires."),
+                                     p("- ", strong("Carte du Transport"), " : Analyse des infrastructures de transport et de leur accessibilité pour comprendre leur impact sur le développement économique."),
+                                     p("- ", strong("Carte de la Construction"), " : État des dynamiques de construction et d’urbanisation pour évaluer le développement immobilier et son influence sur la croissance locale.")
+                              ),
                               column(8, leafletOutput("map_general", height = "600px"))
                             )
                           )
@@ -98,7 +106,16 @@ ui <- navbarPage("Comparaison Socio-Économique des départements francais en 20
                                      leafletOutput("map_chomage", height = "600px")
                               )
                             )
-                          )
+                          ),
+                          fluidRow(
+                            column(4,
+                                   selectInput("departement_select", "Sélectionnez un département :", 
+                                               choices = unique(departements_sf$nom), 
+                                               selected = "Paris")
+                            ),
+                            column(8, h3("Analyse du Taux de Chômage"))
+                          ),
+                          
                  ),
                  tabPanel("Carte des Revenus",
                           fluidPage(
@@ -172,13 +189,18 @@ server <- function(input, output, session) {
   })
   
   output$idf_carte_chomage <- renderLeaflet({
-    selected_departements <- c("75", "77", "78", "91", "92", "93", "94", "95")
-    leaflet(departements_sf %>% filter(code %in% selected_departements)) %>%
-      addPolygons(fillColor = ~pal_chomage(Chomage), color = "black", weight = 1,
+    req(input$departement_select)  # Vérifie qu'un département est sélectionné
+    
+    selected_dep <- departements_sf %>% filter(nom == input$departement_select)
+    
+    leaflet(selected_dep) %>%
+      addPolygons(fillColor = ~pal_chomage(Chomage), color = "black", weight = 2,
                   fillOpacity = 0.8, label = ~paste(nom, "<br>Taux de chômage :", round(Chomage, 1), "%"),
                   popup = ~paste("<strong>", nom, "</strong><br/>Taux de chômage :", round(Chomage, 1), "%")) %>%
-      setView(lng = 2.35, lat = 48.85, zoom = 9)
+      setView(lng = st_coordinates(st_centroid(selected_dep$geometry))[1],
+              lat = st_coordinates(st_centroid(selected_dep$geometry))[2], zoom = 8)
   })
+  
   
   # Carte des revenus
   output$map_revenu <- renderLeaflet({
