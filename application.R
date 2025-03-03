@@ -9,8 +9,8 @@ library(plotly)
 library(DT)
 
 # Charger les données des revenus, chômage et transport
-data <- read_xlsx("/Users/pierrequintindekercadio/Desktop/shinny/www/TAUX CHOMAGE FRANCE _ ESPAGNE T4 2024.xlsx")
-table_resumee <- read_xlsx("/Users/pierrequintindekercadio/Desktop/shinny/www/table_resumee.xlsx")
+data <- read_xlsx("www/TAUX CHOMAGE FRANCE _ ESPAGNE T4 2024.xlsx")
+table_resume <- read_xlsx("www/table_resumee.xlsx")
 # Normaliser les codes départementaux
 data$Code <- as.character(data$Code)
 data$Code <- ifelse(nchar(data$Code) == 1, paste0("0", data$Code), data$Code)
