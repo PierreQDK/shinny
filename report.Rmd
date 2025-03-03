@@ -1,0 +1,20 @@
+---
+title: "Tableau de Bord Socio-Économique"
+author: "Analyse Automatique"
+date: "2022"
+output: pdf_document
+---
+
+## Visualisation des Indicateurs
+
+### **Taux de Chômage**
+\includegraphics{chomage_plot.png}
+
+### **Revenu Moyen**
+\includegraphics{revenu_plot.png}
+
+### **Indice de Transport**
+\includegraphics{transport_plot.png}
+
+### **Taux de Construction**
+\includegraphics{construction_plot.png}
