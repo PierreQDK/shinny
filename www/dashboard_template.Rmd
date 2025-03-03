@@ -82,6 +82,3 @@ Croissance Démographique (\%) & `r params$demo_moy` \\
 
 
 
-
-
-
