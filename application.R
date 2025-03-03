@@ -778,7 +778,7 @@ server <- function(input, output, session) {
         )
       
       output_pdf_path <- tempfile(fileext = ".pdf")
-      rmd_file <- "/Users/pierrequintindekercadio/Desktop/shinny/www/dashboard_template.Rmd"
+       rmd_file <- "www/dashboard_template.Rmd"
       
       if (!file.exists(rmd_file)) {
         stop(paste0("❌ Le fichier RMarkdown n'existe pas à l'emplacement : ", rmd_file))
