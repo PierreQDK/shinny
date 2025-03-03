@@ -1,7 +1,6 @@
 ---
 title: "Analyse du département `r params$departement`"
 author: 
-- "Àlex CHAFES MARTORELL"
 - "Pierre QUINTIN de KERCADIO"
 output: 
   pdf_document:
