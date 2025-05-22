@@ -40,4 +40,4 @@ Ce projet vise également à se familiariser avec le cycle complet de développe
 
 ## 👤 Auteur
 
-- Pierre QUINTIN de KERCADIO – [@PierreQDK](https://github.com/PierreQDK)
+- Pierre QUINTIN de KERCADIO 
